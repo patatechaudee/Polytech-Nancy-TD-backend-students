@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +36,7 @@ public class Application {
         String path = exchange.getRequestURI().getPath();
         String query = exchange.getRequestURI().getQuery();
 
-        // --- Cas 1: GET /tasks (avec ou sans paramètre todo-only) ---
+
         if ("GET".equals(method) && "/tasks".equals(path)) {
             boolean todoOnly = nonNull(query) && query.contains("todo-only=true");
             List<Task> tasks = todoOnly ? dao.findAllTodo() : dao.findAll();
@@ -50,7 +49,7 @@ public class Application {
             return;
         }
 
-        // --- Cas 2: POST /tasks (Création) ---
+
         if ("POST".equals(method) && "/tasks".equals(path)) {
             String body = new String(exchange.getRequestBody().readAllBytes(), UTF_8);
             Task input = JsonUtils.deserialize(body, Task.class);
@@ -61,7 +60,7 @@ public class Application {
             return;
         }
 
-        // --- Cas 3: /tasks/{id} (GET, PUT, DELETE) ---
+
         Matcher m = ID_PATH.matcher(path);
         if (m.matches()) {
             int id = Integer.parseInt(m.group(1));
