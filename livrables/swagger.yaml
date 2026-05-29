@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
     title: TODO API
     version: 1.0.0
-    description: API de gestion d'une TODO List.
+    description: API de gestion d'une TODO List avec validation de DTO.
 servers:
     -   url: http://localhost:8080
         description: Serveur local de développement
@@ -31,7 +31,7 @@ paths:
                             schema:
                                 type: array
                                 items:
-                                    $ref: '#/components/schemas/Task'
+                                    $ref: '#/components/schemas/TaskResponse'
                 '204':
                     description: Aucune tâche trouvée
         post:
@@ -43,7 +43,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Task'
+                            $ref: '#/components/schemas/TaskCreate'
             responses:
                 '201':
                     description: Tâche créée avec succès
@@ -54,7 +54,13 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Task'
+                                $ref: '#/components/schemas/TaskResponse'
+                '400':
+                    description: Paramètre d'entrée ou corps de requête invalide
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationError'
 
     /tasks/{id}:
         parameters:
@@ -75,7 +81,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Task'
+                                $ref: '#/components/schemas/TaskResponse'
                 '404':
                     description: Tâche non trouvée
         put:
@@ -87,10 +93,16 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/Task'
+                            $ref: '#/components/schemas/TaskUpdate'
             responses:
                 '204':
                     description: Tâche modifiée
+                '400':
+                    description: Modifications invalides (contraintes de taille non respectées)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ValidationError'
                 '404':
                     description: Tâche non trouvée
         delete:
@@ -105,11 +117,49 @@ paths:
 
 components:
     schemas:
-        Task:
+        TaskCreate:
             type: object
+            description: DTO d'entrée pour la création d'une tâche (POST)
+            properties:
+                title:
+                    type: string
+                    maxLength: 50
+                    description: Le titre de la tâche (obligatoire, max 50 caractères)
+                description:
+                    type: string
+                    maxLength: 255
+                    nullable: true
+                    description: Description détaillée (max 255 caractères)
+            required:
+                - title
+
+        TaskUpdate:
+            type: object
+            description: DTO d'entrée pour la mise à jour d'une tâche (PUT)
+            properties:
+                title:
+                    type: string
+                    maxLength: 50
+                    description: Le titre mis à jour (obligatoire, max 50 caractères)
+                description:
+                    type: string
+                    maxLength: 255
+                    nullable: true
+                    description: Description mise à jour (max 255 caractères)
+                done:
+                    type: boolean
+                    description: Statut d'avancement de la tâche
+            required:
+                - title
+                - done
+
+        TaskResponse:
+            type: object
+            description: DTO de sortie standard pour la consultation des tâches
             properties:
                 id:
                     type: integer
+                    description: Identifiant unique généré par la base de données
                 title:
                     type: string
                 description:
@@ -120,3 +170,18 @@ components:
             required:
                 - id
                 - title
+                - done
+
+        ValidationError:
+            type: object
+            description: Modèle de retour d'erreur de validation (HTTP 400)
+            properties:
+                field:
+                    type: string
+                    description: Le nom du champ concerné par l'erreur de validation
+                message:
+                    type: string
+                    description: Explication textuelle de l'erreur
+            required:
+                - field
+                - message
